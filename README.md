@@ -1,6 +1,6 @@
 # Automatic recycler
 
-[Automatic recycler](https://i.imgur.com/v3OXxFc.png)
+![Automatic recycler](https://i.imgur.com/v3OXxFc.png)
 
 Raspberry Pi Automatic Recycler with Tensorflow object detection. 
 
