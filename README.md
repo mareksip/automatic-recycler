@@ -1,6 +1,6 @@
-![alt text](https://imgur.com/v3OXxFc "Raspberry Pi Automatic recycler")
-
 # Automatic recycler
+
+[Automatic recycler](https://i.imgur.com/v3OXxFc.png)
 
 Raspberry Pi Automatic Recycler with Tensorflow object detection. 
 
