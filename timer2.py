@@ -105,8 +105,7 @@ def load_labels(label_file):
 def capture(sc):
     print ("Capturing...")
 
-    time.sleep(1)
-    cmd = "raspistill -hf -w 640 -h 480 -n -q 75 -o /home/pi/Desktop/sequence/capture.jpeg"
+    cmd = "raspistill -hf -w 640 -h 480 -n -q 50 -o /home/pi/Desktop/sequence/capture.jpeg"
     subprocess.call(cmd, shell=True)
 
     print ("Clasifying...")
@@ -133,54 +132,69 @@ def capture(sc):
     top_k = results.argsort()[-5:][::-1]
     labels = load_labels(label_file)
 
-    # labels: apple, banana, bottle, box, cup, paper, pen
+    # labels: apple, banana, egg, bottle, box, cup, paper, pen
     # Recyclable: bottle, box, cup, paper
     # Waste: pen and everything else
+    # tincan, can, beercan
     # Biowaste: apple, banana
 
     for i in top_k:
         print(labels[i], results[i])
         if results[i] > np.float32(threshold):
             print("bingo!")
-            if (labels[i] == 'apple') or (labels[i] == 'banana'):
-                mover(1, biowaste_bin)
-                time.sleep(2)
-                mover(2, 200)
-                time.sleep(2)
-                mover(2, 200)
+            if (labels[i] == 'bottle'):
+                print(labels[i])
+                mover(1, 100)
+                time.sleep(1.5)
+                mover(2, -200)
+                time.sleep(1.5)
+                mover(1, -100)
                 s.enter(5, 1, capture, (sc,))
-                time.sleep(1)
-                mover(1, biowaste_bin * -1)
                 break
-            elif (labels[i] == 'bottle') or (labels[i] == 'box') or (labels[i] == 'cup') or (labels[i] == 'paper'):
-                mover(1, recycle_bin)
-                time.sleep(2)
-                mover(2, 400)
-                time.sleep(2)
-                mover(2, 200)
-                time.sleep(1)
-                mover(1, recycle_bin * -1)
+            if (labels[i] == 'cup') or (labels[i] == 'paper') or (labels[i] == 'box'):
+                print(labels[i])
+                mover(1, -100)
+                time.sleep(0.2)
+                mover(2, -200)
+                time.sleep(0.2)
+                mover(1, 100)
+                s.enter(5, 1, capture, (sc,))
+                break
+            if (labels[i] == 'tincan') or (labels[i] == 'can') or (labels[i] == 'beercan'):
+                print(labels[i])
+                mover(1, 100)
+                time.sleep(0.2)
+                mover(2, -200)
+                time.sleep(0.2)
+                mover(1, -100)
+                s.enter(5, 1, capture, (sc,))
+                break
+            if (labels[i] == 'banana') or (labels[i] == 'apple') or (labels[i] == 'egg'):
+                print(labels[i])
+                mover(1, 200)
+                time.sleep(1.5)
+                mover(2, -200)
+                time.sleep(1.5)
+                mover(1, -200)
                 s.enter(5, 1, capture, (sc,))
                 break
             else:
-                mover(1, waste_bin)
-                time.sleep(2)
-                mover(2, 400)
-                time.sleep(2)
-                mover(2, 200)
-                time.sleep(1)
-                mover(1, waste_bin * -1)
+                print("other")
+                mover(2, -200)
                 s.enter(5, 1, capture, (sc,))
                 break
-
-    # Launch sequence for repetitive picture taking
-    s.enter(5, 1, capture, (sc,))
+        else:
+            print("other")
+            mover(2, -200)
+            s.enter(5, 1, capture, (sc,))
+            break
 
 
 def mover(stepper, value):
 
     # log last move
-    write_last(value)
+    # if stepper == 1:
+    #     write_last(value)
 
     # Pins for stepper 1
     out1 = 13
@@ -189,10 +203,10 @@ def mover(stepper, value):
     out4 = 12
 
     if stepper == 2:
-        out1 = 18
-        out2 = 16
-        out3 = 22
-        out4 = 32
+        out1 = 37
+        out2 = 36
+        out3 = 40
+        out4 = 35
 
     i = 0
     positive = 0
@@ -282,9 +296,6 @@ def mover(stepper, value):
                 i = 0
                 continue
             i = i+1
-        if stepper == 2:
-            time.sleep(0.2)
-            mover(2, value * -1)
 
     elif x < 0 and x >= -400:
         x = x*-1
@@ -358,6 +369,8 @@ def mover(stepper, value):
                 i = 7
                 continue
             i = i-1
+    GPIO.cleanup()
+
 
 # Reads text line from last_step.txt
 # Text line contains int of last move
@@ -440,8 +453,8 @@ if __name__ == "__main__":
 
     lastmove = read_last()
     print ('last move: ', str(lastmove))
-    if(lastmove != 0):
-        mover(1, int(lastmove) * 1)
+    # if(lastmove != 0):
+    #    mover(1, int(lastmove) * 1)
         
     # print bin locations
     print ('waste bin: ', str(waste_bin), ' biowaste bin: ',
@@ -451,5 +464,5 @@ if __name__ == "__main__":
     # fileval = read_last()
     # print (fileval)
     print ("Launching timer..")
-    s.enter(5, 1, capture, (s,))
+    s.enter(1, 1, capture, (s,))
     s.run()
